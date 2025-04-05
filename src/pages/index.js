@@ -79,7 +79,6 @@ export default function Home() {
               Longitude: {location.longitude}
             </p>
           ) : (
-            <p>Mengambil lokasi...</p>
           )}
 
           <input
@@ -94,7 +93,6 @@ export default function Home() {
         </main>
 
         <footer className={styles.footer}>
-          <p>© {new Date().getFullYear()} LokasiApp</p>
         </footer>
       </div>
     </>
