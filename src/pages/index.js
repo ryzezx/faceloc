@@ -43,37 +43,34 @@ const handlePhotoChange = async (e) => {
   const file = e.target.files[0];
 
   if (!file) {
-    alert("File tidak ditemukan.");
+    alert("Silakan pilih file terlebih dahulu.");
     return;
   }
 
   if (!location) {
-    alert("Lokasi belum tersedia. Mohon aktifkan GPS.");
+    alert("Lokasi belum tersedia. Pastikan layanan lokasi diaktifkan.");
     return;
   }
 
   setUploading(true);
   const fileName = `${Date.now()}-${file.name}`;
 
-  // Upload ke Supabase Storage
-  const { data, error: uploadError } = await supabase.storage
+  // Upload foto ke Supabase Storage
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from("photos")
     .upload(fileName, file);
 
   if (uploadError) {
-    console.error("Upload error:", uploadError);
-    alert("Gagal upload foto: " + uploadError.message);
+    console.error("Error saat mengunggah foto:", uploadError);
+    alert("Gagal mengunggah foto: " + uploadError.message);
     setUploading(false);
     return;
   }
 
-  // Buat URL publik
   const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
-  console.log("Foto berhasil di-upload ke:", fileUrl);
-  console.log("Lokasi:", location);
 
-  // Simpan ke tabel Supabase
-  const { error: insertError } = await supabase
+  // Menyimpan data ke tabel photos
+  const { data: insertData, error: insertError } = await supabase
     .from("photos")
     .insert([
       {
@@ -84,14 +81,15 @@ const handlePhotoChange = async (e) => {
     ]);
 
   if (insertError) {
-    console.error("Insert error:", insertError);
-    alert("Gagal simpan data ke database: " + insertError.message);
+    console.error("Error saat menyimpan data ke database:", insertError);
+    alert("Gagal menyimpan data ke database: " + insertError.message);
   } else {
-    alert("Foto & lokasi berhasil disimpan!");
+    alert("Foto dan lokasi berhasil disimpan!");
   }
 
   setUploading(false);
 };
+
 
 
 
