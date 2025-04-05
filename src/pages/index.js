@@ -72,14 +72,14 @@ export default function Home() {
         <main className={styles.main}>
           <h1></h1>
 
-          {location ? (
-            <p>
-              Latitude: {location.latitude}
-              <br />
-              Longitude: {location.longitude}
-            </p>
-          ) : (
-          )}
+        {location && (
+          <p>
+            Latitude: {location.latitude}
+            <br />
+            Longitude: {location.longitude}
+          </p>
+        )}
+
 
           <input
             type="file"
