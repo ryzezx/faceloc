@@ -41,28 +41,40 @@ export default function Home() {
 
 const handlePhotoChange = async (e) => {
   const file = e.target.files[0];
-  if (!file || !location) return;
+
+  if (!file) {
+    alert("File tidak ditemukan.");
+    return;
+  }
+
+  if (!location) {
+    alert("Lokasi belum tersedia. Mohon aktifkan GPS.");
+    return;
+  }
 
   setUploading(true);
   const fileName = `${Date.now()}-${file.name}`;
 
-  // 1. Upload foto ke Supabase Storage
+  // Upload ke Supabase Storage
   const { data, error: uploadError } = await supabase.storage
     .from("photos")
     .upload(fileName, file);
 
   if (uploadError) {
+    console.error("Upload error:", uploadError);
     alert("Gagal upload foto: " + uploadError.message);
     setUploading(false);
     return;
   }
 
-  // 2. Ambil URL foto
+  // Buat URL publik
   const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
+  console.log("Foto berhasil di-upload ke:", fileUrl);
+  console.log("Lokasi:", location);
 
-  // 3. Simpan data lokasi + foto ke table Supabase
+  // Simpan ke tabel Supabase
   const { error: insertError } = await supabase
-    .from("photos") // <-- nama table
+    .from("photos")
     .insert([
       {
         file_url: fileUrl,
@@ -72,6 +84,7 @@ const handlePhotoChange = async (e) => {
     ]);
 
   if (insertError) {
+    console.error("Insert error:", insertError);
     alert("Gagal simpan data ke database: " + insertError.message);
   } else {
     alert("Foto & lokasi berhasil disimpan!");
@@ -79,6 +92,7 @@ const handlePhotoChange = async (e) => {
 
   setUploading(false);
 };
+
 
 
   return (
